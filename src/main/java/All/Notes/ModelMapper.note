@@ -1,0 +1,124 @@
+### **1. When Variable Names Are the Same**
+If the variable names in the source and target classes are the same, **ModelMapper** can automatically map the fields
+without any additional configuration.
+#### Example:
+```java
+public class User {
+    private Long id;
+    private String name;
+    // Getters and setters
+}
+public class UserDTO {
+    private Long id;
+    private String name;
+    // Getters and setters
+}
+// Mapping
+ModelMapper modelMapper = new ModelMapper();
+User user = new User();
+user.setId(1L);
+user.setName("John Doe");
+/******************************************************************************************/
+UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+/******************************************************************************************/
+System.out.println(userDTO.getId()); // 1
+System.out.println(userDTO.getName()); // John Doe
+```
+In this case, since the field names (`id` and `name`) are the same in both `User` and `UserDTO`, **ModelMapper**
+automatically maps them.
+### **2. When Variable Names Are Different**
+If the variable names in the source and target classes are different, you need to explicitly define the mapping between
+the fields using **ModelMapper's `TypeMap`**.
+
+#### Example:
+```java
+public class User {
+    private Long userId;
+    private String fullName;
+    // Getters and setters
+}
+
+public class UserDTO {
+    private Long id;
+    private String name;
+    // Getters and setters
+}
+// Mapping with explicit configuration
+ModelMapper modelMapper = new ModelMapper();
+// Create a TypeMap to define custom mappings
+/******************************************************************************************/
+modelMapper.createTypeMap(User.class, UserDTO.class)
+    .addMapping(User::getUserId, UserDTO::setId) // Map userId (source) to id (target)
+    .addMapping(User::getFullName, UserDTO::setName);
+/******************************************************************************************/
+
+    // Map fullName (source) to name (target)
+// Perform mapping
+User user = new User();
+user.setUserId(1L);
+user.setFullName("John Doe");
+UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+System.out.println(userDTO.getId()); // 1
+System.out.println(userDTO.getName()); // John Doe
+```
+Here, since the field names are different (`userId` vs `id` and `fullName` vs `name`), you explicitly define the mappings
+ using `addMapping`.
+
+
+ /******************************************************************************************/
+### **3. Advanced Configuration**
+If you have complex mappings or want to avoid repetitive configuration, you can use **ModelMapper's** advanced features:
+
+#### a. **Custom Converters**
+You can define custom converters for specific types or complex mappings.
+
+ /******************************************************************************************/
+Converter<String, String> toUpperCase = ctx -> ctx.getSource().toUpperCase();
+
+-Converter is an interface defined in the ModelMapper library (not in the standard Java SDK).
+-ctx is an instance of MappingContext<String, String>.
+-ctx.getSource() retrieves the source value (the input string).
+-toUpperCase() is called on the source string to convert it to uppercase.
+
+ /******************************************************************************************/
+Converter<String, String> toUpperCase = ctx -> ctx.getSource().toUpperCase();
+modelMapper.createTypeMap(User.class, UserDTO.class)
+    .addMappings(mapper -> {
+        mapper.using(toUpperCase).map(User::getFullName, UserDTO::setName);
+                           }
+                );
+
+modelMapper.createTypeMap(User.class, UserDTO.class) creates a mapping between the User class and the UserDTO class.
+
+.addMappings(mapper -> { ... }) allows you to add custom mappings between the source (User) and destination (UserDTO)
+fields.
+
+Inside the addMappings block, mapper.using(toUpperCase).map(User::getFullName, UserDTO::setName) specifies that the
+fullName field from User should be mapped to the name field in UserDTO, and the toUpperCase converter should be applied
+ during this mapping.
+#### b. **Conditional Mapping**
+You can add conditions to map fields only if certain criteria are met.
+
+```java
+modelMapper.createTypeMap(User.class, UserDTO.class)
+    .addMappings(mapper -> {
+        mapper.when(ctx -> ctx.getSource() != null).map(User::getFullName, UserDTO::setName);
+    });
+```
+#### c. **Skip Null Values**
+You can configure **ModelMapper** to skip null values during mapping.
+
+```java
+modelMapper.getConfiguration().setSkipNullEnabled(true);
+### **4. Best Practices**
+- **Consistent Naming**: Use consistent naming conventions across your classes to minimize the need for explicit mappings.
+- **Testing**: Always test your mappings to ensure that all fields are correctly mapped, especially when using custom
+configurations.
+- **Documentation**: Document any custom mappings or configurations for future reference.
+### **Summary**
+- **Same Variable Names**: No additional configuration is needed. **ModelMapper** will automatically map fields with the
+ same names.
+- **Different Variable Names**: Use `TypeMap` and `addMapping` to explicitly define how fields should be mapped.
+- **Advanced Use Cases**: Use custom converters, conditional mappings, or skip null values as needed.
+
+By following these steps, you can effectively use **ModelMapper** to handle both simple and complex mapping scenarios.

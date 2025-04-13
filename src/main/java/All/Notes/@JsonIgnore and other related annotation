@@ -1,0 +1,187 @@
+### **Code Explanation**
+```java
+@JsonIgnore
+@OneToMany(mappedBy="category")
+private List<Product> products;
+```
+
+1. **`@OneToMany(mappedBy="category")`**:
+   - This annotation defines a **one-to-many relationship** between two entities: `Category`
+   (the current class) and `Product`.
+   - The `mappedBy="category"` attribute indicates that the `Product` entity owns the relationship
+   (i.e., it has a foreign key pointing to the `Category` entity).
+   - This means the `Product` entity will have a field like:
+     ```java
+     @ManyToOne
+     @JoinColumn(name="category_id")
+     private Category category;
+     ```
+
+2. **`@JsonIgnore`**:
+   - This annotation is from the **Jackson library** and is used to **ignore a field during JSON serialization and deserialization**.
+   - When you serialize a `Category` object to JSON, the `products` field will be excluded from the output.
+
+---
+
+### **What Happens If You Do NOT Use `@JsonIgnore`?**
+
+If you remove `@JsonIgnore`, the `products` field will be included in the JSON output when you serialize a `Category` object. This can lead to **two major issues**:
+
+---
+
+#### **1. Infinite Recursion (StackOverflowError)**
+- The `Category` object contains a list of `Product` objects (`products`).
+- Each `Product` object has a reference back to the `Category` object (`category`).
+- When Jackson tries to serialize the `Category` object:
+  - It serializes the `products` field.
+  - Each `Product` in the list is serialized, including its `category` field.
+  - The `category` field in `Product` refers back to the original `Category` object.
+  - This creates an **infinite loop** of serialization, leading to a **`StackOverflowError`**.
+
+**Example of Infinite Recursion**:
+```json
+{
+  "id": 1,
+  "name": "Electronics",
+  "products": [
+    {
+      "id": 101,
+      "name": "Laptop",
+      "category": {
+        "id": 1,
+        "name": "Electronics",
+        "products": [
+          {
+            "id": 101,
+            "name": "Laptop",
+            "category": {
+              "id": 1,
+              "name": "Electronics",
+              "products": [
+                // And so on... (infinite recursion)
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### **2. Performance Issues**
+- Even if you avoid infinite recursion (e.g., by using `@JsonManagedReference` and `@JsonBackReference`),
+ serializing the entire object graph (all `Category` and `Product` objects) can lead to:
+  - **Large JSON payloads**: The response size can become huge, especially if there are many `Product`
+  objects.
+  - **Slow serialization**: Serializing a large object graph can be computationally expensive and slow
+  down your application.
+
+---
+
+### **How to Fix This Without `@JsonIgnore`**
+
+If you don’t want to use `@JsonIgnore`, you can use other approaches to handle the relationship and avoid
+infinite recursion:
+
+---
+
+#### **1. Use `@JsonManagedReference` and `@JsonBackReference`**
+- These annotations are used to define the **parent-child relationship** in bidirectional relationships.
+- `@JsonManagedReference` is used on the **parent side** (the side that will be serialized).
+- `@JsonBackReference` is used on the **child side** (the side that will be ignored during serialization).
+
+**Example**:
+```java
+// In Category.java
+@OneToMany(mappedBy="category")
+@JsonManagedReference
+private List<Product> products;
+
+// In Product.java
+@ManyToOne
+@JoinColumn(name="category_id")
+@JsonBackReference
+private Category category;
+```
+
+**Result**:
+- When serializing `Category`, the `products` field will be included, but the `category` field in each
+`Product` will be ignored.
+- This avoids infinite recursion.
+
+---
+
+#### **2. Use `@JsonIdentityInfo`**
+- This annotation assigns a unique identifier to each object during serialization, so repeated references
+ to the same object are replaced with the identifier.
+
+**Example**:
+```java
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class,
+  property = "id"
+)
+public class Category {
+    @OneToMany(mappedBy="category")
+    private List<Product> products;
+}
+
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class,
+  property = "id"
+)
+public class Product {
+    @ManyToOne
+    @JoinColumn(name="category_id")
+    private Category category;
+}
+```
+
+**Result**:
+- The JSON output will include IDs for repeated objects instead of serializing the entire object again.
+
+---
+
+#### **3. Use DTOs (Data Transfer Objects)**
+- Instead of serializing the entity directly, create a **DTO** (Data Transfer Object) that contains only the
+fields you want to expose.
+- This avoids exposing the entire object graph and gives you full control over the JSON output.
+
+**Example**:
+```java
+public class CategoryDTO {
+    private Long id;
+    private String name;
+    // Exclude products or include only necessary fields
+}
+
+public class ProductDTO {
+    private Long id;
+    private String name;
+    // Exclude category or include only necessary fields
+}
+```
+
+---
+
+### **When to Use `@JsonIgnore`**
+Use `@JsonIgnore` when:
+1. You want to **exclude a field** from JSON serialization/deserialization.
+2. You want to **avoid infinite recursion** in bidirectional relationships.
+3. You want to **reduce the size of the JSON payload** by excluding unnecessary fields.
+
+---
+
+### **Summary**
+- If you **do not use `@JsonIgnore`**, the `products` field will be included in the JSON output, which
+ can lead to **infinite recursion** and **performance issues**.
+- To avoid these problems, you can:
+  - Use `@JsonIgnore` to exclude the field.
+  - Use `@JsonManagedReference` and `@JsonBackReference` to handle bidirectional relationships.
+  - Use `@JsonIdentityInfo` to assign unique identifiers to objects.
+  - Use **DTOs** to control the JSON output.
+
+By understanding these options, you can choose the best approach for your use case!

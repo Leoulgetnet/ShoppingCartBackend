@@ -1,0 +1,41 @@
+{
+ "status": 200,
+  "headers": {
+    "Content-Type": "application/json"
+  }, "body": {
+    "message": "Hello, world!"
+    }}
+
+HTTP/1.1 201 Created
+Location: http://localhost:8080/users/123           /*header*/ created using Created()
+Content-Type: application/json                     /*header*/
+{"message": "User created successfully!",
+  "user": {
+    "id": 123,
+    "name": "John Doe"}}
+
+
+return ResponseEntity.ok(new ApiResponse("All Categories Returned!", service.getAllCategories()));
+----->question, like why we use .ok() to attach a data ,why not .body()
+The ok() method in the code snippet you provided is used to create a ResponseEntity with
+the HTTP status 200 (OK). The .ok() method also allows you to pass the response body
+directly, making the code more succinct and readable.
+
+In your case, ok() is being used for convenience because it automatically sets the status to 200 and
+allows you to pass the body in one method call. If you used body() directly, you would need to set
+the status separately, which isn't necessary when you're already returning a 200 OK response.
+
+
+return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("All Categories Returned!",
+service.getAllCategories()));
+return ResponseEntity.ok().body(contactService.getAllContact(page,size))
+return ResponseEntity.ok(new ApiResponse("All Categories Returned!", service.getAllCategories()));
+/***Both are same**/
+
+
+ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) sets the HTTP status to 500 Internal Server Error.
+
+ResponseEntity.created()
+ResponseEntity.created(location): Sets the HTTP status to 201 Created and includes the location of the
+newly created resource in the Location header.
+

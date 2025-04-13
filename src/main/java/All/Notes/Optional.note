@@ -1,0 +1,143 @@
+
+
+### **What is `Optional`?**
+
+`Optional<T>` is a container object that may or may not contain a non-null value. It is used to
+ represent a value that can be `null` in a more expressive and safer way.
+
+---
+
+### **Key Methods of `Optional`**
+
+#### **1. `Optional.ofNullable(T value)`**
+- Creates an `Optional` object that may contain a `null` value.
+- If the value is `null`, it returns an empty `Optional`.
+- Use this when you’re not sure if the value might be `null`.
+
+```java
+String name = null;
+Optional<String> optionalName = Optional.ofNullable(name);
+System.out.println(optionalName.isPresent()); // false
+```
+
+---
+
+#### **2. `Optional.of(T value)`**
+- Creates an `Optional` object that must contain a non-null value.
+- If the value is `null`, it throws a `NullPointerException`.
+- Use this when you’re certain the value is not `null`.
+
+```java
+String name = "John";
+Optional<String> optionalName = Optional.of(name);
+System.out.println(optionalName.isPresent()); // true
+```
+
+---
+
+#### **3. `isPresent()`**
+- Returns `true` if the `Optional` contains a non-null value, otherwise `false`.
+
+```java
+Optional<String> optionalName = Optional.ofNullable("John");
+if (optionalName.isPresent()) {
+    System.out.println("Name is present: " + optionalName.get());
+}
+```
+
+---
+
+#### **4. `ifPresent(Consumer<? super T> action)`**
+- Executes the given action if the `Optional` contains a non-null value.
+- Use this to perform an action only if the value is present.
+
+```java
+Optional<String> optionalName = Optional.ofNullable("John");
+optionalName.ifPresent(name -> System.out.println("Name is: " + name));
+```
+
+---
+
+#### **5. `orElse(T other)`**
+- Returns the value if present, otherwise returns the provided default value.
+- Use this to provide a fallback value.
+
+```java
+String name = null;
+String result = Optional.ofNullable(name).orElse("Unknown");
+System.out.println(result); // Unknown
+```
+
+---
+
+#### **6. `orElseGet(Supplier<? extends T> supplier)`**
+- Returns the value if present, otherwise invokes the supplier and returns its result.
+- Use this when the default value is expensive to compute.
+
+```java
+String name = null;
+String result = Optional.ofNullable(name).orElseGet(() -> "Unknown");
+System.out.println(result); // Unknown
+```
+
+---
+
+#### **7. `orElseThrow(Supplier<? extends X> exceptionSupplier)`**
+- Returns the value if present, otherwise throws an exception provided by the supplier.
+- Use this to throw a custom exception when the value is absent.
+
+```java
+String name = null;
+String result = Optional.ofNullable(name)
+        .orElseThrow(() -> new IllegalArgumentException("Name cannot be null"));
+
+
+/*******************************************************************************/
+    private final Function<String , String> fileExtension=filename->
+            Optional.of(filename).filter(name->name.contains("."))
+/*filters the Optional object to check if the filename
+contains a dot (.). If the filename does not contain a dot, the Optional will be empty.
+ */
+                .map(name->"."+name.substring(filename.lastIndexOf(".")+1))
+                .orElse(".png");
+
+
+    private final BiFunction<String , MultipartFile,String> photofunction=(id, image) -> {
+         try {
+Path FileStorageLocation= Paths.get(PHOTO_DIRECTORY).toAbsolutePath().normalize();
+//Paths.get:-retrieves the current working directory(Directory as file)-where the program is running-folder
+ /*if we want to retrive the location of downloads folder or any folder we ca use
+ *System.getProperty("user.home"),retrieves the part of C:\Users\GECHO then if we use
+ *Paths.get(System.getProperty("user.home"), "Downloads").toAbsolutePath().normalize();
+ * */
+if(!Files.exists(FileStorageLocation)){
+    Files.createDirectories(FileStorageLocation);
+}
+Files.copy(image.getInputStream(),
+        FileStorageLocation.resolve(id + fileExtension.apply(image.getOriginalFilename())),
+        REPLACE_EXISTING);
+return ServletUriComponentsBuilder
+        .fromCurrentContextPath()
+        .path("/contacts/image/"+id+fileExtension.apply(image.getOriginalFilename()))
+        .toString();}
+         catch(Exception e){
+             throw new RuntimeException("Unable To Save Image");
+         }};}
+
+/*******************************************************************************************/
+
+@PostMapping("")
+    public ResponseEntity<Contact> createContact( @RequestBody Contact contact){
+        Contact savedContact = contactService.CreateContact(contact);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedContact.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(savedContact);}
+
+ @GetMapping("/{id}")
+    public ResponseEntity<Contact> getContacts(@PathVariable(value="id") String id){
+        return ResponseEntity.ok().body(contactService.FindById(id));
+    }
+/*********************************************************************************************/

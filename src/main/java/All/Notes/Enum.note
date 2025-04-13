@@ -1,0 +1,63 @@
+public enum DaysOfTheWeek{
+Monday,
+Tuesday,
+Wendsday,
+Thursday,
+Friday,
+Saturday,
+Sunday;
+}
+
+DaysOfTheWeek day=new DaysOfTheWeek();
+/*Not Allowed , Can not instantiate a new object,
+it is not because unlike of classes enum contains
+static values which can not be manipulated*/
+
+DaysOfTheWeek day=DaysOfTheWeek.Monday;
+
+DaysOfTheWeek.values(); returns the array of all of the values of DaysOfTheWeek
+for(DaysOfTheWeek w:DaysOfTheWeek.values)-->Do Something
+
+
+
+/******************************************************************/
+
+public enum cerials{
+CAPITAIN_CRUNCH(10),
+FROOT_LOOPS(5),
+REESES_PUFFS(20),
+COCOA_PUFFS(32);
+
+final int levelOfDeliciousness;
+
+cerials(int levelOfDeliciousness){
+this.levelOfDeliciousness=levelOfDeliciousness;}
+}
+
+another class
+System.out.println(cerials.FROOT_LOOPS.levelOfDeleciousness); output is -->5
+
+if we do not use final for level of deliciousness it can be manipulated
+
+like cerials.FROOT_LOOPS.levelOfDeliciousness=900;
+
+/toString() or String.valueOf
+
+public enum Day {
+    SUNDAY {
+        @Override
+        public String toString() {
+            return "It's Sunday!";
+        }
+    },
+    MONDAY {
+        @Override
+        public String toString() {
+            return "It's Monday!";
+        }
+    },
+    // Other days...
+}
+
+
+/******************************************************************/
